@@ -1,0 +1,26 @@
+app:
+  name: "World"
+  image:
+    repository: my-app
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  port: 5000
+
+secrets:
+  key: "my-super-secret-password123"
+  multi: |
+    This is a multi-line secret.
+    Line 2.
+    Line 3.
+
+configmaps:
+  key: "config-value-from-helm"
+  multi: |
+    This is a multi-line config.
+    Line 2.
+    Line 3.
+
+sidecar:
+  image: curlimages/curl:latest
+  checkInterval: 10s
