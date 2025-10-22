@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-configmap
+  labels:
+    app: {{ .Chart.Name }}
+data:
+  CONFIG_KEY: {{ .Values.configmaps.key | quote }}
+  CONFIG_MULTI: |
+{{ .Values.configmaps.multi | indent 4 }}
