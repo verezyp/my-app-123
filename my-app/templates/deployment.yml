@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-deployment
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  replicas: {{ .Values.app.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: web
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.app.port }}
+          env:
+            - name: APP_NAME
+              value: "{{ .Values.app.name }}"
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: SECRET_KEY
+            - name: SECRET_MULTI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: SECRET_MULTI
+            - name: CONFIG_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-configmap
+                  key: CONFIG_KEY
+            - name: CONFIG_MULTI
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-configmap
+                  key: CONFIG_MULTI
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "250m"
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+
+        - name: sidecar
+          image: "{{ .Values.sidecar.image }}"
+          imagePullPolicy: Always
+          command: ["sh", "-c"]
+          args:
+            - |
+              while true; do
+                echo "[$(date -u)] [SIDECAR] Making curl request to http://localhost:{{ .Values.app.port }}...";
+                curl -s -o /dev/null -w "Status: %{http_code} | Time: %{time_total}s\n" http://localhost:{{ .Values.app.port }};
+                echo "----------------------------------------";
+                sleep {{ .Values.sidecar.checkInterval }};
+              done
+          resources:
+            limits:
+              memory: "64Mi"
+              cpu: "100m"
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
